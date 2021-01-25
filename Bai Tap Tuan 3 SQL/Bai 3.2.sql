@@ -83,4 +83,37 @@ select * from Students
 select * from Students
 where Class like N'AV1'
 
---3. Sử dụng lệnh UPDATE để chuyển sinh viên có mã AV0807012 sang lớp AV2update Students set Class = N'AV2' where StudentID like N'AV0807012'--4. Tính tổng số sinh viên của từng lớpselect Class as 'Lớp', COUNT(*) as 'Số Lượng' from Studentsgroup by Class--5. Hiển thị danh sách sinh viên lớp AV2 được sắp xếp tăng dần theo StudentNameselect * from Studentswhere Class like N'AV2'order by StudentName ASC--6. Hiển thị danh sách sinh viên không đạt lý thuyết môn S001 (theory <10) thi ngày 6/5/2008select * from Markwhere Theory < 10 and Date = '2008-5-6' and SubjectID like N'S001'--7. Hiển thị tổng số sinh viên không đạt lý thuyết môn S001. (theory <10)select SubjectID as 'Môn Thi', COUNT(*) as 'Số lượng sinh viên không đạt' from Markwhere SubjectID like N'S001' and Theory < 10group by SubjectID--8. Hiển thị Danh sách sinh viên học lớp AV1 và sinh sau ngày 1/1/1980select * from Studentswhere Class like N'AV1' and DateofBirth > '1980-1-1'--9. Xoá sinh viên có mã AV0807011delete from Studentswhere StudentID like N'AV0807011'--10.Hiển thị danh sách sinh viên dự thi môn có mã S001 ngày 6/5/2008 bao gồm các trường sau: StudentID, StudentName, SubjectName, Theory, Practical, Dateselect Mark.StudentID, StudentName, SubjectName, Theory, Practical, Date fromMark inner join Students on Mark.StudentID = Students.StudentIDinner join Subjects on Mark.SubjectID = Subjects.SubjectIDwhere Date = '2008-5-6'
+--3. Sử dụng lệnh UPDATE để chuyển sinh viên có mã AV0807012 sang lớp AV2
+update Students set Class = N'AV2' where StudentID like N'AV0807012'
+
+--4. Tính tổng số sinh viên của từng lớp
+select Class as 'Lớp', COUNT(*) as 'Số Lượng' from Students
+group by Class
+
+--5. Hiển thị danh sách sinh viên lớp AV2 được sắp xếp tăng dần theo StudentName
+select * from Students
+where Class like N'AV2'
+order by StudentName ASC
+
+--6. Hiển thị danh sách sinh viên không đạt lý thuyết môn S001 (theory <10) thi ngày 6/5/2008
+select * from Mark
+where Theory < 10 and Date = '2008-5-6' and SubjectID like N'S001'
+
+--7. Hiển thị tổng số sinh viên không đạt lý thuyết môn S001. (theory <10)
+select SubjectID as 'Môn Thi', COUNT(*) as 'Số lượng sinh viên không đạt' from Mark
+where SubjectID like N'S001' and Theory < 10
+group by SubjectID
+
+--8. Hiển thị Danh sách sinh viên học lớp AV1 và sinh sau ngày 1/1/1980
+select * from Students
+where Class like N'AV1' and DateofBirth > '1980-1-1'
+
+--9. Xoá sinh viên có mã AV0807011
+delete from Students
+where StudentID like N'AV0807011'
+
+--10.Hiển thị danh sách sinh viên dự thi môn có mã S001 ngày 6/5/2008 bao gồm các trường sau: StudentID, StudentName, SubjectName, Theory, Practical, Date
+select Mark.StudentID, StudentName, SubjectName, Theory, Practical, Date from
+Mark inner join Students on Mark.StudentID = Students.StudentID
+inner join Subjects on Mark.SubjectID = Subjects.SubjectID
+where Date = '2008-5-6'
