@@ -4,7 +4,7 @@ go
 create database QLBanHang 
 on primary(
 	name = QLBanHang_DB,
-	filename = 'C:\Users\Admin\Desktop\Bai Tap Tuan 9\QLBanHang_db1.mdf',
+	filename = 'C:\Users\Administrator\Desktop\9.Bai Tap Tuan 9\QLBanHang_db1.mdf',
 	size = 10mb,
 	maxsize = 100mb,
 	filegrowth = 10mb
@@ -12,7 +12,7 @@ on primary(
 
 log on(
 	name = QLBanHang_log,
-	filename = 'C:\Users\Admin\Desktop\Bai Tap Tuan 9\QLBanHang_log1.ldf',
+	filename = 'C:\Users\Administrator\Desktop\9.Bai Tap Tuan 9\QLBanHang_log1.ldf',
 	size = 10mb,
 	maxsize = 100mb,
 	filegrowth = 10mb
@@ -158,7 +158,6 @@ as
 		else
 			begin
 				insert into HangSX values(@MaHangSX, @TenHang, @DiaChi, @SoDT, @Email)
-				print N'Thêm mới thành công'
 			end
 	end
 
@@ -247,7 +246,7 @@ as
 			end
 	end
 
-execute CauD N'NV04',N'Nguyễn Nhật Minh',N'Nam',N'Thanh Hóa',N'0332803583',N'fcarsenal614@gmail.com',N'Công Nghệ Thông Tin', 0
+execute CauD N'NV04',N'Nguyễn Nhật Minh',N'Nam',N'Thanh Hóa',N'0332803583',N'fcarsenal614@gmail.com',N'Công Nghệ Thông Tin', 1
 select * from NhanVien
 
 --e. Viết thủ tục nhập dữ liệu cho bảng Nhap với các tham biến SoHDN, MaSP, manv, 
@@ -315,12 +314,79 @@ as
 					print N'Không tồn tại ' + @MaNV + ' trong cơ sở dữ liệu'
 				end
 			else
-				
+				begin
+					declare @SoLuong int
+					set @SoLuong = (select SoLuong from SanPham where MaSP = @MaSP)
+					
+					if(@SoLuongX <= @SoLuong)
+						begin
+							if(exists(select * from PXuat where SoHDX = @SoHDX))
+								begin
+									update PXuat
+									set NgayXuat = @NgayXuat, MaNV = @MaNV
+									where SoHDX = @SoHDX
+								end
+							else
+								begin
+									insert into PXuat values(@SoHDX, @NgayXuat, @MaNV)
+								end
+						end
+					else
+						begin
+							print N'Số lượng xuất vượt quá số lượng có trong kho'
+						end
+				end
 	end
+
+execute CauF N'X06', N'SP01', N'NV01', '2021-3-31', 10
+select * from PXuat
+
 --g. Viết thủ tục xóa dữ liệu bảng NhanVien với tham biến là manv. Nếu manv chưa có thì 
 --thông báo, ngược lại xóa NhanVien với NhanVien bị xóa là manv. (Lưu ý: xóa NhanVien
 --thì phải xóa các bảng Nhap, Xuat mà nhân viên này tham gia).
+alter procedure CauG(@MaNV nchar(10))
+as
+	begin
+		if(not exists(select * from NhanVien where MaNV = @MaNV))
+			begin
+				print N'Nhân Viên có mã ' + @MaNV + ' không tồn tại trong bảng Nhân Viên'
+			end
+		else
+			begin
+				delete from PNhap where MaNV = @MaNV
+				delete from PXuat where MaNV = @MaNV
+				delete from NhanVien where MaNV = @MaNV
+			end
+	end
+
+select * from PNhap
+select * from PXuat 
+select * from Nhap
+select * from Xuat
+select * from NhanVien
+--TH có tồn tại
+execute CauG N'NV03'
+
+--TH không tồn tại
+execute CauG N'NV04'
 
 --h. Viết thủ tục xóa dữ liệu bảng SanPham với tham biến là MaSP. Nếu MaSP chưa có thì 
 --thông báo, ngược lại xóa SanPham với SanPham bị xóa là MaSP. (Lưu ý: xóa SanPham
 --thì phải xóa các bảng Nhap, Xuat mà SanPham này cung ứng).
+
+create procedure CauH(@MaSP nchar(10))
+as
+	begin
+		if(not exists(select * from SanPham where MaSP = @MaSP))
+			begin
+				print N'Không tồn tại Sản Phẩm có Mã ' + @MaSP
+			end
+		else
+			begin
+				delete from Nhap where MaSP = @MaSP
+				delete from Xuat where MaSP = @MaSP
+				delete from SanPham where MaSP = @MaSP
+			end
+	end
+
+execute CauH N'SP01'
