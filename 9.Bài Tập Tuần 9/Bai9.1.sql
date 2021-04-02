@@ -344,7 +344,7 @@ select * from PXuat
 --g. Viết thủ tục xóa dữ liệu bảng NhanVien với tham biến là manv. Nếu manv chưa có thì 
 --thông báo, ngược lại xóa NhanVien với NhanVien bị xóa là manv. (Lưu ý: xóa NhanVien
 --thì phải xóa các bảng Nhap, Xuat mà nhân viên này tham gia).
-alter procedure CauG(@MaNV nchar(10))
+create procedure CauG(@MaNV nchar(10))
 as
 	begin
 		if(not exists(select * from NhanVien where MaNV = @MaNV))
@@ -353,6 +353,8 @@ as
 			end
 		else
 			begin
+				delete from Nhap where SoHDN in (select SoHDN from PNhap where MaNV = @MaNV)
+				delete from Xuat where SoHDX in (select SoHDX from PXuat where MaNV = @MaNV)
 				delete from PNhap where MaNV = @MaNV
 				delete from PXuat where MaNV = @MaNV
 				delete from NhanVien where MaNV = @MaNV

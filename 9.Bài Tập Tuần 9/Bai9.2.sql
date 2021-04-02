@@ -4,7 +4,7 @@ go
 create database QLBanHang 
 on primary(
 	name = QLBanHang_DB,
-	filename = 'C:\Users\Administrator\Desktop\9.Bai Tap Tuan 9\QLBanHang_db1.mdf',
+	filename = 'C:\Users\Admin\Desktop\Tuan 9 SQL\QLBanHang_db1.mdf',
 	size = 10mb,
 	maxsize = 100mb,
 	filegrowth = 10mb
@@ -12,7 +12,7 @@ on primary(
 
 log on(
 	name = QLBanHang_log,
-	filename = 'C:\Users\Administrator\Desktop\9.Bai Tap Tuan 9\QLBanHang_log1.ldf',
+	filename = 'C:\Users\Admin\Desktop\Tuan 9 SQL\QLBanHang_log1.ldf',
 	size = 10mb,
 	maxsize = 100mb,
 	filegrowth = 10mb
@@ -180,10 +180,10 @@ as
 declare @ErrorA int
 
 --Sai Thông Tin Giới Tính
-execute CauA N'NV06', N'Nguyễn Văn A', N'NonSexual', N'Hà Nội', '1234567890', 'VanA@gmail.com', N'Hành Chính', 0, @ErrorA output
+--execute CauA N'NV06', N'Nguyễn Văn A', N'NonSexual', N'Hà Nội', '1234567890', 'VanA@gmail.com', N'Hành Chính', 0, @ErrorA output
 
 --Thêm mới
-execute CauA N'NV06', N'Nguyễn Văn A', N'Nam', N'Hà Nội', '1234567890', 'VanA@gmail.com', N'Hành Chính', 0, @ErrorA output
+--execute CauA N'NV06', N'Nguyễn Văn A', N'Nam', N'Hà Nội', '1234567890', 'VanA@gmail.com', N'Hành Chính', 0, @ErrorA output
 
 --Sửa đổi
 execute CauA N'NV06', N'Nguyễn Văn A', N'Nam', N'Hà Nội', '12345678901', 'VanA@gmail.com', N'Hành Chính', 1, @ErrorA output
@@ -199,7 +199,7 @@ select @ErrorA as N'Kiểm Tra Kết Qủa'
 -- Nếu SoLuong <0 thì trả về mã lỗi 2
 -- Ngược lại trả về mã lỗi 0.
 create procedure CauB(@MaSP nchar(10),
-					  @MaHangSX nchar(10),
+					  @TenHang nvarchar(20),
 					  @TenSP nvarchar(20),
 					  @SoLuong int,
 					  @MauSac nvarchar(20),
@@ -210,19 +210,165 @@ create procedure CauB(@MaSP nchar(10),
 					  @Error int output)
 as
 	begin
-		
+		if(not exists(select * from HangSX where TenHang = @TenHang))
+			begin
+				set @Error = 1
+			end
+		else
+			if(@SoLuong < 0)
+				begin
+					set @Error = 2
+				end
+			else
+				begin
+					set @Error = 0
+					declare @MaHangSX nchar(10)
+					set @MaHangSX = (select MaHangSX from HangSX where TenHang = @TenHang)
+
+					if(@Flag = 0)
+						begin
+							insert into SanPham values(@MaSP, @MaHangSX , @TenSP, @SoLuong, @MauSac, @GiaBan, @DonViTinh, @MoTa)
+						end
+					else
+						begin
+							update SanPham
+							set MaHangSX = @MaHangSX, TenSP = @TenSP, SoLuong = @SoLuong,
+								MauSac = @MauSac, GiaBan = @GiaBan, DonViTinh = @DonViTinh,
+								MoTa = @MoTa
+							where MaSP = @MaSP
+						end
+				end
 	end
+
+--TH mã lỗi 1
+declare @Error int
+execute CauB N'SP06', N'Xiaomi', N'Redmi Note 5', 500, N'Đỏ', 5000000, N'VND', N'Hàng Cận Cao Cấp', 0, @Error output
+select @Error as N'Mã lỗi'
+
+--TH mã lỗi 2
+declare @Error int
+execute CauB N'SP06', N'Samsung', N'Redmi Note 5', -500, N'Đỏ', 5000000, N'VND', N'Hàng Cận Cao Cấp', 0, @Error output
+select @Error as N'Mã lỗi'
+
+--TH mã lỗi 0
+--flag = 0
+declare @Error int
+execute CauB N'SP06', N'Samsung', N'Redmi Note 5', 500, N'Đỏ', 5000000, N'VND', N'Hàng Cận Cao Cấp', 0, @Error output
+select @Error as N'Mã lỗi'
+
+--flag = 1
+declare @Error int
+execute CauB N'SP06', N'Samsung', N'Redmi Note 5', 500, N'Đỏ', 5000000, N'VND', N'Hàng Cận Cao Cấp', 1, @Error output
+select @Error as N'Mã lỗi'
+
+select * from SanPham
+
 --c. Viết thủ tục xóa dữ liệu bảng NhanVien với tham biến là manv. Nếu manv chưa có thì 
 --trả về 1, ngược lại xóa NhanVien với NhanVien bị xóa là manv và trả về 0. (Lưu ý: xóa 
 --NhanVien thì phải xóa các bảng Nhap, Xuat mà nhân viên này tham gia).
+create procedure CauC(@MaNV nchar(10), @Error int output)
+as
+	begin
+		if(not exists(select * from NhanVien where MaNV = @MaNV))
+			begin
+				set @Error = 1
+			end
+		else
+			begin
+				set @Error = 0
+				delete from Nhap where SoHDN in (select SoHDN from PNhap where MaNV = @MaNV)
+				delete from Xuat where SoHDX in (select SoHDX from PXuat where MaNV = @MaNV)
+				delete from PNhap where MaNV = @MaNV
+				delete from PXuat where MaNV = @MaNV
+				delete from NhanVien where MaNV = @MaNV
+			end
+	end
+
+select * from Nhap
+select * from Xuat
+select * from PNhap
+select * from PXuat
+select * from NhanVien
+
+--Test TH mã lỗi 1
+declare @Error int
+execute CauC N'NV08', @Error output
+select @Error as 'Mã Lỗi Trả Về'
+
+--Test TH mã lỗi 0
+declare @Error int
+execute CauC N'NV01', @Error output
+select @Error as 'Mã Lỗi Trả Về'
 
 --d. Viết thủ tục xóa dữ liệu bảng SanPham với tham biến là MaSP. Nếu MaSP chưa có thì 
 --trả về 1, ngược lại xóa SanPham với SanPham bị xóa là MaSP và trả về 0. (Lưu ý: xóa 
 --SanPham thì phải xóa các bảng Nhap, Xuat mà SanPham này cung ứng).
+create procedure CauD(@MaSP nchar(10), @Error int output)
+as
+	begin
+		if(not exists(select * from SanPham where MaSP = @MaSP))
+			begin
+				set @Error = 1
+			end
+		else
+			begin
+				set @Error = 0 
+				delete from Nhap where MaSP = @MaSP
+				delete from Xuat where MaSP = @MaSP
+				delete from SanPham where MaSP = @MaSP
+			end
+	end
+
+--test
+select * from Nhap
+select * from Xuat
+select * from SanPham
+
+--TH mã lỗi 1
+declare @Error int
+execute CauD N'SP09', @Error output
+select @Error as N'Mã Lỗi'
+
+--TH mã lỗi 0
+declare @Error int
+execute CauD N'SP02', @Error output
+select @Error as N'Mã Lỗi'
 
 --e. Tạo thủ tục nhập liệu cho bảng HangSX, với các tham biến truyền vào MaHangSX, 
 --TenHang, DiaChi, SoDT, Email. Hãy kiểm tra xem TenHang đã tồn tại trước đó hay chưa, 
 --nếu rồi trả về mã lỗi 1? Nếu có rồi thì không cho nhập và trả về mã lỗi 0.
+
+create procedure CauE(@MaHangSX nchar(10),
+					@TenHang nvarchar(20),
+					@DiaChi nvarchar(30),
+					@SoDT nvarchar(20),
+					@Email nvarchar(30),
+					@Error int output)
+as
+	begin
+		if(exists(select * from HangSX where TenHang = @TenHang))
+			begin
+				set @Error = 0
+			end
+		else
+			begin
+				set @Error = 1
+				insert into HangSX values(@MaHangSX, @TenHang, @DiaChi, @SoDT, @Email)
+			end
+	end
+
+--test
+select * from HangSX
+
+--TH mã lỗi 0
+declare @Error int
+execute CauE N'H04', N'OPPO', N'Trung Quốc', '1234567890', N'xiaomi@gmail.com', @Error output
+select @Error as N'Mã Lỗi'
+
+--TH mã lỗi 1
+declare @Error int
+execute CauE N'H04', N'Xiaomi', N'Trung Quốc', '1234567890', N'xiaomi@gmail.com', @Error output
+select @Error as N'Mã Lỗi'
 
 --f. Viết thủ tục nhập dữ liệu cho bảng Nhap với các tham biến SoHDN, MaSP, manv, 
 --NgayNhap, SoLuongN, DonGiaN. Kiểm tra xem MaSP có tồn tại trong bảng SanPham hay 
@@ -230,9 +376,136 @@ as
 --về 2? ngược lại thì hãy kiểm tra: Nếu SoHDN đã tồn tại thì cập nhật bảng Nhap theo 
 --SoHDN, ngược lại thêm mới bảng Nhap và trả về mã lỗi 0.
 
+create procedure CauF(@SoHDN nchar(10),
+					  @MaSP nchar(10),
+				      @MaNV nchar(10),
+				      @NgayNhap date,
+				      @SoLuongN int,
+				      @DonGiaN money,
+				      @Error int output)
+as
+	begin
+		if(not exists(select * from SanPham where MaSP = @MaSP))
+			begin
+				set @Error = 1
+			end
+		else
+			if(not exists(select * from NhanVien where MaNV = @MaNV))
+				begin
+					set @Error = 2
+				end
+			else
+				begin
+					set @Error = 0
+
+					if(exists(select * from Nhap where SoHDN = @SoHDN))
+						begin
+							update Nhap
+							set MaSP = @MaSP, SoLuongN = @SoLuongN, DonGiaN = @DonGiaN
+							where SoHDN = @SoHDN
+							print N'update thành công'
+ 						end
+					else
+						begin
+							insert into Nhap values(@SoHDN, @MaSP, @SoLuongN, @DonGiaN)
+							print N'thêm mới thành công'
+						end
+				end
+	end
+
+--test
+select * from SanPham
+select * from NhanVien 
+select * from Nhap
+select * from PNhap
+--TH Mã lỗi 1
+declare @Error int
+execute CauF N'H04', N'SP09', N'NV02', '2021-4-2', 500, 500000, @Error output 
+select @Error as N'Mã Lỗi'
+
+--TH Mã lỗi 2
+declare @Error int
+execute CauF N'H04', N'SP03', N'NV09', '2021-4-2', 500, 500000, @Error output 
+select @Error as N'Mã Lỗi'
+
+--TH Mã lỗi 0
+declare @Error int
+execute CauF N'N04', N'SP03', N'NV02', '2021-4-2', 500, 500000, @Error output 
+select @Error as N'Mã Lỗi'
+
 --g. Viết thủ tục nhập dữ liệu cho bảng Xuat với các tham biến SoHDX, MaSP, manv, 
 --NgayXuat, SoLuongX. Kiểm tra xem MaSP có tồn tại trong bảng SanPham hay không nếu 
 --không trả về 1? manv có tồn tại trong bảng NhanVien hay không nếu không trả về 2? 
 --SoLuongX <= SoLuong nếu không trả về 3? ngược lại thì hãy kiểm tra: Nếu SoHDX đã 
 --tồn tại thì cập nhật bảng Xuat theo SoHDX, ngược lại thêm mới bảng Xuat và trả về mã 
 --lỗi 0.
+
+alter procedure CauG(@SoHDX nchar(10),
+					  @MaSP nchar(10),
+					  @MaNV nchar(10),
+					  @NgayXuat date,
+					  @SoLuongX int,
+					  @Error int output)
+as
+	begin
+		if(not exists(select * from SanPham where MaSP = @MaSP))
+			begin
+				set @Error = 1
+			end
+		else
+			if(not exists(select * from NhanVien where MaNV = @MaNV))
+				begin
+					set @Error = 2
+				end
+			else
+				begin
+					declare @SoLuong int
+					set @SoLuong = (select SoLuong from SanPham where MaSP = @MaSP)
+
+					if(@SoLuongX > @SoLuong)
+						begin
+							set @Error = 3
+						end
+					else
+						begin
+							set @Error = 0
+
+							if(exists(select * from Xuat where SoHDX = @SoHDX))
+								begin
+									update Xuat
+									set MaSP = @MaSP, SoLuongX = @SoLuongX
+									where SoHDX = @SoHDX
+								end
+							else
+								begin
+									insert into Xuat values(@SoHDX, @MaSP, @SoLuongX)
+								end
+						end
+				end
+	end
+
+--test
+select * from SanPham
+select * from NhanVien
+select * from Xuat
+select * from PXuat
+
+--TH mã lỗi 1
+declare @Error int
+execute CauG N'X02', N'SP09', N'NV01', '2021-4-2', 500, @Error output
+select @Error as N'Mã lỗi'
+
+--TH mã lỗi 2
+declare @Error int
+execute CauG N'X02', N'SP01', N'NV100', '2021-4-2', 500, @Error output
+select @Error as N'Mã lỗi'
+
+--TH mã lỗi 3
+declare @Error int
+execute CauG N'X02', N'SP01', N'NV01', '2021-4-2', 500, @Error output
+select @Error as N'Mã lỗi'
+
+--TH mã lỗi 0
+declare @Error int
+execute CauG N'X02', N'SP01', N'NV03', '2021-4-2', 2, @Error output
+select @Error as N'Mã lỗi'
