@@ -110,13 +110,27 @@ select * from Nhanvien
 
 --c. Viết thủ tục SP_LuongLN với Luong=LuongCanBan*NgayCong PhuCap, biết thủ tục trả về, không truyền tham biến.
 
-create procedure SP_LuongLN(@ketqua float output)
+create procedure SP_LuongLN(@ketqua int output)
 as
 	begin
-		set @ketqua = (select LuongCanBan * NgayCong + PhuCap from Nhanvien where MaNV = N'NV01')
+		if(not exists(select LuongCanBan * NgayCong + PhuCap from Nhanvien))
+			begin
+				set @ketqua = 0
+			end
+		else
+			begin
+				set @ketqua = 1
+
+				declare @trave table(MaNV nchar(10), TienLuong money)
+				insert into @trave
+				select MaNV, LuongCanBan * NgayCong + PhuCap from Nhanvien
+
+				select * from @trave
+			end
+		
 		return @ketqua
 	end
 
-declare @kq float
+declare @kq int
 execute SP_LuongLN @kq output
 select @kq as 'Bảng lương Nhân Viên'
