@@ -119,5 +119,3 @@ as
 				on Hang.MaHang = inserted.MaHang
 			end
 	end
-
-insert into HangBan values()
